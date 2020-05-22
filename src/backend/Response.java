@@ -1,15 +1,15 @@
 package backend;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import Model.User;
 
 /**
  * Servlet implementation class Response
@@ -39,28 +39,30 @@ public class Response extends HttpServlet {
 		String age_s = servletRequest.getParameter("age");
 		String activity = servletRequest.getParameter("activity");
 		
-		//create print writer instance
-		PrintWriter out = response.getWriter();
+		boolean success = true;
 		
 		//check if user has been filling all the information, if not print a warning message and return to the page
-		if (gender.isEmpty() || weight_s.isEmpty() || height_s.isEmpty() || age_s.isEmpty() || activity.isEmpty()) {
-			RequestDispatcher rd = request.getRequestDispatcher("index.jsp");
-			out.println("<font color = red>Please fill all the information</font>");
-			rd.include(request, response);
-		} else {   // if all the information is flled:
-
-			// convert weight and height from string to double, convert age to int
-			double weight = Double.valueOf(servletRequest.getParameter("weight"));
-			double height = Double.valueOf(servletRequest.getParameter("height"));
-			int age = Integer.valueOf(servletRequest.getParameter("age"));
+		if (gender == null || weight_s == null  || height_s == null || age_s == null || activity == null) {
+			request.setAttribute("msg","Please fill in all the information");
+			success = false;
 			
+			
+			//RequestDispatcher rd = request.getRequestDispatcher("index.jsp");
+			//rd.include(request, response);
+		} else {   // if all the information is flled:
+			User temp = new User();
+			// convert weight and height from string to double, convert age to int
+			temp.setWeight(Double.valueOf(weight_s));
+			temp.setHeight(Double.valueOf(height_s));
+			temp.setAge(Integer.valueOf(age_s));
+			temp.setGender(gender);
 			//calculate the bmr by using formula for men and women
 			double bmr, calorie_maintenance;
 			double act_rate = 1;
 			if (gender.equals("Men")) {
-				bmr = 66 + (13.7 * weight) + (5 * height) - (6.8 * age);
+				bmr = 66 + (13.7 * temp.getWeight()) + (5 * temp.getHeight()) - (6.8 * temp.getAge());
 			} else {
-				bmr = 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age);
+				bmr = 655 + (9.6 * temp.getWeight()) + (1.8 * temp.getHeight()) - (4.7 * temp.getAge());
 			}
 			
 			//set activity rate for different activity level
@@ -79,11 +81,13 @@ public class Response extends HttpServlet {
 			calorie_maintenance = bmr * act_rate;
 			
 			//print out calculation result
-			response.setContentType("text/html");
-			out.println("your bmr: " + "<p>" + bmr + "</p>");
-			out.println("your calorie maintenance: " + "<p>" + calorie_maintenance + "</p>");
+			request.setAttribute("msg","");
+			request.setAttribute("bmr",bmr);
+			request.setAttribute("calorie",calorie_maintenance);
 			
 		}
+		request.setAttribute("success", success);
+		request.getRequestDispatcher("index.jsp").forward(request, response);
 
 	}
 
